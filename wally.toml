@@ -1,0 +1,14 @@
+[package]
+name = "emery/scoresync"
+version = "0.0.1"
+registry = "https://github.com/UpliftGames/wally-index"
+realm = "shared"
+exclude = ["test", "Packages", "build", "test.project.json", "selene.toml", "README.md", ".gitignore", ".vscode"]
+description = """
+    ScoreSync aims to fix some outstanding issues found when making Leaderboards
+"""
+
+[dependencies]
+Sift = "csqrl/sift@0.0.9"
+Signal = "data-oriented-house/lemonsignal@1.10.0"
+Promise = "evaera/promise@4.0.0"

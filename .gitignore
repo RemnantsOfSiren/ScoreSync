@@ -1,0 +1,11 @@
+# Project place file
+/ScoreSync.rbxlx
+
+# Roblox Studio lock files
+/*.rbxlx.lock
+/*.rbxl.lock
+
+Packages
+sourcemap.json
+wally.lock
+selene.toml
