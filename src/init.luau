@@ -115,6 +115,10 @@ function ScoreSync.new(Config: Types.Config)
                 self._Cache = {}
                 self._DataStore = DataStore
             end
+
+            if os.clock() - self._Start >= Refresh then
+                self:GetOrderedListAsync() -- if it hasn't refreshed in a while, automatically refresh
+            end
         end)
     end
 

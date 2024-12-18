@@ -9,6 +9,8 @@ local Score = ScoreSync.new({
     Refresh = 60,
 })
 
+Score.Updated:Connect(print)
+
 local Player
 
 repeat
@@ -18,5 +20,4 @@ until Player
 
 while task.wait() do
     Score:IncrementAsync(Player, 1)
-    Score:GetOrderedListAsync():andThen(print)
 end
