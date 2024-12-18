@@ -92,12 +92,14 @@ function ScoreSync.new(Config: Types.Config)
     
     local self = setmetatable({
         _Cache = {},
+        _Start = os.clock() - Refresh,
+        _Order = Config.Type == nil or Config.Type == "Highest",
+        Updated = Signal.new(),
         _Refresh = Refresh,
+        _Interval = Interval,
         _DataStore = DataStore,
         _Processor = Processor.new(Callback),
-        _Order = Config.Type == nil or Config.Type == "Highest",
-        _Start = os.clock() - Refresh,
-        Updated = Signal.new(),
+        _UTCOffset = UTCOffset,
     }, ScoreSync)
 
     if Cycle ~= "All-Time" then
@@ -116,6 +118,21 @@ function ScoreSync.new(Config: Types.Config)
     end
 
     return self
+end
+
+--[=[
+    @method TimeUntilReset
+    @within ScoreSync
+    @return number
+]=]
+function ScoreSync:TimeUntilReset(AsString: boolean?): number | string
+    if self._Interval == math.huge then
+        return if AsString then "N/A" else math.huge
+    end
+
+    local Time = os.clock() + self._UTCOffset
+    local Remaining = self._Interval - math.floor(Time % self._Interval)
+    return if AsString then string.format("%02d:%02d:%02d", Remaining / 3600, Remaining / 60 % 60, Remaining % 60) else Remaining
 end
 
 --[=[
