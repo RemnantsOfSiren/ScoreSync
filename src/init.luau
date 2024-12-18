@@ -26,12 +26,21 @@ local ScoreSync = {}
 ScoreSync.__index = ScoreSync
 
 --[=[
-    @class ScoreSync
-    @constructor
-    @param Config { Name: string, UTC: number?, Type: ("Highest" | "Lowest")?, Cycle: ("All-Time" | "Yearly" | "Quarterly" | "Monthly" | "Daily" | "Hourly")?, Refresh: number? }
-    @returns ScoreSync
+    @prop Updated Signal
+    @within ScoreSync
 ]=]
 
+--[=[
+    @function new
+    @within ScoreSync
+    @param Config { Name: string, UTC: number?, Type: ("Highest" | "Lowest")?, Cycle: ("All-Time" | "Yearly" | "Quarterly" | "Monthly" | "Daily" | "Hourly")?, Refresh: number? }
+    @return ScoreSync
+]=]
+
+--[=[
+    @class ScoreSync
+    Leaderboard object (ScoreSync) for managing player scores.
+]=]
 function ScoreSync.new(Config: Types.Config)
     local Name = if RunService:IsStudio() then "Mock" .. Config.Name else Config.Name
     local Refresh = Config.Refresh or 60
@@ -114,7 +123,7 @@ end
     @within ScoreSync
     @param Player Player
     @param Amount number?
-    @returns Promise<boolean>
+    @return Promise<boolean>
 ]=]
 function ScoreSync:IncrementAsync(Player: Player, Amount: number?)
     if not Amount then
@@ -134,7 +143,7 @@ end
     @within ScoreSync
     @param Player Player
     @param Amount number
-    @returns Promise<boolean>
+    @return Promise<boolean>
 ]=]
 function ScoreSync:SetAsync(Player: Player, Value: number)
     return Promise.resolve(self._Processor:Add({
@@ -146,12 +155,19 @@ function ScoreSync:SetAsync(Player: Player, Value: number)
 end
 
 --[=[
+    @type Result (key: string, value: number)
+    @within ScoreSync
+
+    An object containing the key and value of a score.
+]=]
+
+--[=[
     @method GetOrderedListAsync
     @within ScoreSync
     @param Count number?
     @param Min number?
     @param Max number?
-    @returns Promise<[{key: string, value: number}]>
+    @return Promise<{ Result }>
 ]=]
 function ScoreSync:GetOrderedListAsync(Count: number?, Min: number?, Max: number?): {{ key: string, value: number }}
     local CanRefresh = os.clock() - self._Start >= self._Refresh
