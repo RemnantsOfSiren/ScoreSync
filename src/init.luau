@@ -206,8 +206,9 @@ function ScoreSync:GetOrderedListAsync(Count: number?, Min: number?, Max: number
             local CurrentPage = Pages:GetCurrentPage()
             List = table.clone(CurrentPage)
 
-            if not Min and not Max then -- only update cache when no value range is defined
+            if not Min and not Max and not Array.equalsDeep(List, self._Cache) then -- only update cache when no value range is defined and the list is different
                 self._Cache = List
+                self.Updated:Fire(self._Cache)
             end
         end
 
