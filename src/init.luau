@@ -43,6 +43,7 @@ ScoreSync.__index = ScoreSync
 ]=]
 function ScoreSync.new(Config: Types.Config)
     local Name = if RunService:IsStudio() then "Mock" .. Config.Name else Config.Name
+    local Order = Config.Type or "Highest"
     local Refresh = Config.Refresh or 60
     local UTCOffset = if Config.UTC then Config.UTC * 3600 else 0 
 
@@ -76,7 +77,7 @@ function ScoreSync.new(Config: Types.Config)
             if Event.Event == "Increment" then
                 return (Value or 0) + Event.Value
             elseif Event.Event == "Set" then
-                return Event.Value
+                return if Order == "Highest" then math.max(Value or 0, Event.Value) else math.min(Value or 0, Event.Value)
             end
             return 0
         end)
@@ -93,7 +94,7 @@ function ScoreSync.new(Config: Types.Config)
     local self = setmetatable({
         _Cache = {},
         _Start = os.clock() - Refresh,
-        _Order = Config.Type == nil or Config.Type == "Highest",
+        _Order = Order,
         Updated = Signal.new(),
         _Refresh = Refresh,
         _Interval = Interval,
