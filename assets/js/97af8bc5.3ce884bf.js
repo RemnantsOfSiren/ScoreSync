@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkdocs=self.webpackChunkdocs||[]).push([[779],{63891:e=>{e.exports=JSON.parse('{"sourceUrl":"https://github.com/RemnantsOfSiren/ScoreSync/blob/master","baseUrl":"/ScoreSync/","classOrder":[],"apiCategories":[]}')}}]);
