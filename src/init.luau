@@ -33,8 +33,18 @@ ScoreSync.__index = ScoreSync
 --[=[
     @function new
     @within ScoreSync
-    @param Config { Name: string, UTC: number?, Type: ("Highest" | "Lowest")?, Cycle: ("All-Time" | "Yearly" | "Quarterly" | "Monthly" | "Daily" | "Hourly")?, Refresh: number? }
+    @param Config { Name: string, UTC: number?, Type: ("Highest" | "Lowest")?, Cycle: ("All-Time" | "Yearly" | "Quarterly" | "Monthly" | "Daily" | "Hourly")?, Refresh: number?, BatchOverrides: { Size: number?, Delay: number? }? }
     @return ScoreSync
+
+    Creates a new ScoreSync object.
+    - `Name` (string): The name of the leaderboard.
+    - `UTC` (number, optional): The UTC offset for the leaderboard.
+    - `Type` (string, optional): The type of leaderboard (Highest or Lowest).
+    - `Cycle` (string, optional): The cycle of the leaderboard (All-Time, Yearly, Quarterly, Monthly, Weekly, Daily, Hourly).
+    - 'Refresh' (number, optional): The refresh rate of the leaderboard.
+    - `BatchOverrides` (table, optional): The batch overrides for the leaderboard.
+        - `Size` (number, optional): The number of requests to process at once. Defaults to 20
+        - `Delay` (number, optional): The delay between each batch. Defaults to 30
 ]=]
 
 --[=[
@@ -99,7 +109,7 @@ function ScoreSync.new(Config: Types.Config)
         _Refresh = Refresh,
         _Interval = Interval,
         _DataStore = DataStore,
-        _Processor = Processor.new(Callback),
+        _Processor = Processor.new(Callback, Config.BatchOverrides),
         _UTCOffset = UTCOffset,
     }, ScoreSync)
 

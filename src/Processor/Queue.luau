@@ -14,6 +14,10 @@ function Queue.new()
     }, Queue)
 end
 
+function Queue:Size()
+    return #self.List
+end
+
 function Queue:Enqueue(Process: Types.Process)
     local FindInQueue = Array.findWhere(self.List, function(_Queue: Types.Process)
         return _Queue.Key == Process.Key and _Queue.Event == Process.Event
