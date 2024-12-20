@@ -140,7 +140,8 @@ end
 --[=[
     @method TimeUntilReset
     @within ScoreSync
-    @return number
+    @param AsString boolean?
+    @return number | string
 ]=]
 function ScoreSync:TimeUntilReset(AsString: boolean?): number | string
 	if self._Interval == math.huge then
