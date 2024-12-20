@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v2.3.1">
 <title data-rh="true">ScoreSync | ScoreSync</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://RemnantsOfSiren.github.io/ScoreSync/api/ScoreSync"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docusaurus_tag" content="default"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docsearch:docusaurus_tag" content="default"><meta data-rh="true" property="og:title" content="ScoreSync | ScoreSync"><meta data-rh="true" name="description" content="Leaderboard object (ScoreSync) for managing player scores."><meta data-rh="true" property="og:description" content="Leaderboard object (ScoreSync) for managing player scores."><link data-rh="true" rel="canonical" href="https://RemnantsOfSiren.github.io/ScoreSync/api/ScoreSync"><link data-rh="true" rel="alternate" href="https://RemnantsOfSiren.github.io/ScoreSync/api/ScoreSync" hreflang="en"><link data-rh="true" rel="alternate" href="https://RemnantsOfSiren.github.io/ScoreSync/api/ScoreSync" hreflang="x-default"><link rel="stylesheet" href="/ScoreSync/assets/css/styles.19a5646f.css">
-<link rel="preload" href="/ScoreSync/assets/js/runtime~main.a117bfca.js" as="script">
-<link rel="preload" href="/ScoreSync/assets/js/main.b58067b3.js" as="script">
+<link rel="preload" href="/ScoreSync/assets/js/runtime~main.2fe85fda.js" as="script">
+<link rel="preload" href="/ScoreSync/assets/js/main.3f7997df.js" as="script">
 </head>
 <body class="navigation-with-keyboard">
 <script>!function(){function e(e){document.documentElement.setAttribute("data-theme",e)}var t=function(){var e=null;try{e=localStorage.getItem("theme")}catch(e){}return e}();null!==t?e(t):window.matchMedia("(prefers-color-scheme: dark)").matches?e("dark"):(window.matchMedia("(prefers-color-scheme: light)").matches,e("light"))}()</script><div id="__docusaurus">
@@ -20,7 +20,7 @@
   <li><code>UTC</code> (number, optional): The UTC offset for the leaderboard.</li>
   <li><code>Type</code> (string, optional): The type of leaderboard (Highest or Lowest).</li>
   <li><code>Cycle</code> (string, optional): The cycle of the leaderboard (All-Time, Yearly, Quarterly, Monthly, Weekly, Daily, Hourly).</li>
-  <li>'Refresh' (number, optional): The refresh rate of the leaderboard.</li>
+  <li><code>Refresh</code> (number, optional): The refresh rate of the leaderboard.</li>
   <li><code>BatchOverrides</code> (table, optional): The batch overrides for the leaderboard.
     <ul>
       <li><code>Size</code> (number, optional): The number of requests to process at once. Defaults to 20</li>
@@ -32,7 +32,7 @@
     &quot;functions&quot;: [
         {
             &quot;name&quot;: &quot;new&quot;,
-            &quot;desc&quot;: &quot;Creates a new ScoreSync object.\n- `Name` (string): The name of the leaderboard.\n- `UTC` (number, optional): The UTC offset for the leaderboard.\n- `Type` (string, optional): The type of leaderboard (Highest or Lowest).\n- `Cycle` (string, optional): The cycle of the leaderboard (All-Time, Yearly, Quarterly, Monthly, Weekly, Daily, Hourly).\n- &#x27;Refresh&#x27; (number, optional): The refresh rate of the leaderboard.\n- `BatchOverrides` (table, optional): The batch overrides for the leaderboard.\n    - `Size` (number, optional): The number of requests to process at once. Defaults to 20\n    - `Delay` (number, optional): The delay between each batch. Defaults to 30&quot;,
+            &quot;desc&quot;: &quot;Creates a new ScoreSync object.\n- `Name` (string): The name of the leaderboard.\n- `UTC` (number, optional): The UTC offset for the leaderboard.\n- `Type` (string, optional): The type of leaderboard (Highest or Lowest).\n- `Cycle` (string, optional): The cycle of the leaderboard (All-Time, Yearly, Quarterly, Monthly, Weekly, Daily, Hourly).\n- `Refresh` (number, optional): The refresh rate of the leaderboard.\n- `BatchOverrides` (table, optional): The batch overrides for the leaderboard.\n    - `Size` (number, optional): The number of requests to process at once. Defaults to 20\n    - `Delay` (number, optional): The delay between each batch. Defaults to 30&quot;,
             &quot;params&quot;: [
                 {
                     &quot;name&quot;: &quot;Config&quot;,
@@ -190,7 +190,7 @@
         &quot;path&quot;: &quot;src/init.luau&quot;
     }
 }</pre></details></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#types" class="table-of-contents__link toc-highlight">Types</a><ul><li><a href="#Result" class="table-of-contents__link toc-highlight">Result</a></li></ul></li><li><a href="#properties" class="table-of-contents__link toc-highlight">Properties</a><ul><li><a href="#Updated" class="table-of-contents__link toc-highlight">Updated</a></li></ul></li><li><a href="#functions" class="table-of-contents__link toc-highlight">Functions</a><ul><li><a href="#GetOrderedListAsync" class="table-of-contents__link toc-highlight">:GetOrderedListAsync</a></li><li><a href="#IncrementAsync" class="table-of-contents__link toc-highlight">:IncrementAsync</a></li><li><a href="#SetAsync" class="table-of-contents__link toc-highlight">:SetAsync</a></li><li><a href="#TimeUntilReset" class="table-of-contents__link toc-highlight">:TimeUntilReset</a></li><li><a href="#new" class="table-of-contents__link toc-highlight">.new</a></li></ul></li></ul></div></div></div></div></main></div></div><footer class="footer footer--dark"><div class="container container-fluid"><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2024 RemnantsOfSiren. Built with Moonwave and Docusaurus.</div></div></div></footer></div>
-<script src="/ScoreSync/assets/js/runtime~main.a117bfca.js"></script>
-<script src="/ScoreSync/assets/js/main.b58067b3.js"></script>
+<script src="/ScoreSync/assets/js/runtime~main.2fe85fda.js"></script>
+<script src="/ScoreSync/assets/js/main.3f7997df.js"></script>
 </body>
 </html>
