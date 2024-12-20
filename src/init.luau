@@ -2,14 +2,14 @@
 local RunService = game:GetService("RunService")
 local DataStoreService = game:GetService("DataStoreService")
 
-local TestSuccess = pcall(function() 
-    local TestStore = DataStoreService:GetDataStore("-")
-    TestStore:SetAsync("1", "Hello")
+local TestSuccess = pcall(function()
+	local TestStore = DataStoreService:GetDataStore("-")
+	TestStore:SetAsync("1", "Hello")
 end)
 
 if not TestSuccess then
-    error("DataStoreService is not enabled.")
-    return
+	error("DataStoreService is not enabled.")
+	return
 end
 
 local Types = require(script.Types)
@@ -52,87 +52,89 @@ ScoreSync.__index = ScoreSync
     Leaderboard object (ScoreSync) for managing player scores.
 ]=]
 function ScoreSync.new(Config: Types.Config)
-    local Name = if RunService:IsStudio() then "Mock" .. Config.Name else Config.Name
-    local Order = Config.Type or "Highest"
-    local Refresh = Config.Refresh or 60
-    local UTCOffset = if Config.UTC then Config.UTC * 3600 else 0 
+	local Name = if RunService:IsStudio() then "Mock" .. Config.Name else Config.Name
+	local Order = Config.Type or "Highest"
+	local Refresh = Config.Refresh or 60
+	local UTCOffset = if Config.UTC then Config.UTC * 3600 else 0
 
-    local Cycle = Config.Cycle or "All-Time"
-    local Current = nil
-    local Interval = math.huge
-    local DataStore = nil
+	local Cycle = Config.Cycle or "All-Time"
+	local Current = nil
+	local Interval = math.huge
+	local DataStore = nil
 
-    if Cycle ~= "All-Time" then
-        local Time = os.clock() + UTCOffset
+	if Cycle ~= "All-Time" then
+		local Time = os.clock() + UTCOffset
 
-        if Cycle == "Yearly" then
-            Interval = 31536000
-        elseif Cycle == "Quarterly" then
-            Interval = 7884000
-        elseif Cycle == "Monthly" then
-            Interval = 2628000
-        elseif Cycle == "Weekly" then
-            Interval = 604800
-        elseif Cycle == "Daily" then
-            Interval = 86400
-        elseif Cycle == "Hourly" then
-            Interval = 3600
-        end
-        
-        Current = math.floor(Time / Interval)
-    end
+		if Cycle == "Yearly" then
+			Interval = 31536000
+		elseif Cycle == "Quarterly" then
+			Interval = 7884000
+		elseif Cycle == "Monthly" then
+			Interval = 2628000
+		elseif Cycle == "Weekly" then
+			Interval = 604800
+		elseif Cycle == "Daily" then
+			Interval = 86400
+		elseif Cycle == "Hourly" then
+			Interval = 3600
+		end
 
-    local function Callback(Event: Types.Process): boolean
-        local Success, Error = pcall(DataStore.UpdateAsync, DataStore, Event.Key, function(Value: number | nil) 
-            if Event.Event == "Increment" then
-                return (Value or 0) + Event.Value
-            elseif Event.Event == "Set" then
-                return if Order == "Highest" then math.max(Value or 0, Event.Value) else math.min(Value or 0, Event.Value)
-            end
-            return 0
-        end)
+		Current = math.floor(Time / Interval)
+	end
 
-        if not Success then
-            warn(Error)
-        end
-        
-        return Success
-    end
-    
-    DataStore = DataStoreService:GetOrderedDataStore(if Cycle == "All-Time" then Name else `{Name}-{Cycle}:{Current}`)
-    
-    local self = setmetatable({
-        _Cache = {},
-        _Start = os.clock() - Refresh,
-        _Order = Order,
-        Updated = Signal.new(),
-        _Refresh = Refresh,
-        _Interval = Interval,
-        _DataStore = DataStore,
-        _Processor = Processor.new(Callback, Config.BatchOverrides),
-        _UTCOffset = UTCOffset,
-    }, ScoreSync)
+	local function Callback(Event: Types.Process): boolean
+		local Success, Error = pcall(DataStore.UpdateAsync, DataStore, Event.Key, function(Value: number | nil)
+			if Event.Event == "Increment" then
+				return (Value or 0) + Event.Value
+			elseif Event.Event == "Set" then
+				return if Order == "Highest"
+					then math.max(Value or 0, Event.Value)
+					else math.min(Value or 0, Event.Value)
+			end
+			return 0
+		end)
 
-    if Cycle ~= "All-Time" then
-        RunService.Heartbeat:Connect(function()
-            local Time = os.clock() + UTCOffset
-            local Key = math.floor(Time / Interval)
+		if not Success then
+			warn(Error)
+		end
 
-            if Key ~= Current then
-                Current = Key
-                DataStore = DataStoreService:GetOrderedDataStore(`{Name}-{Cycle}:{Current}`)
-                
-                self._Cache = {}
-                self._DataStore = DataStore
-            end
+		return Success
+	end
 
-            if os.clock() - self._Start >= Refresh then
-                self:GetOrderedListAsync() -- if it hasn't refreshed in a while, automatically refresh
-            end
-        end)
-    end
+	DataStore = DataStoreService:GetOrderedDataStore(if Cycle == "All-Time" then Name else `{Name}-{Cycle}:{Current}`)
 
-    return self
+	local self = setmetatable({
+		_Cache = {},
+		_Start = os.clock() - Refresh,
+		_Order = Order,
+		Updated = Signal.new(),
+		_Refresh = Refresh,
+		_Interval = Interval,
+		_DataStore = DataStore,
+		_Processor = Processor.new(Callback, Config.BatchOverrides),
+		_UTCOffset = UTCOffset,
+	}, ScoreSync)
+
+	if Cycle ~= "All-Time" then
+		RunService.Heartbeat:Connect(function()
+			local Time = os.clock() + UTCOffset
+			local Key = math.floor(Time / Interval)
+
+			if Key ~= Current then
+				Current = Key
+				DataStore = DataStoreService:GetOrderedDataStore(`{Name}-{Cycle}:{Current}`)
+
+				self._Cache = {}
+				self._DataStore = DataStore
+			end
+
+			if os.clock() - self._Start >= Refresh then
+				self:GetOrderedListAsync() -- if it hasn't refreshed in a while, automatically refresh
+			end
+		end)
+	end
+
+	return self
 end
 
 --[=[
@@ -141,13 +143,15 @@ end
     @return number
 ]=]
 function ScoreSync:TimeUntilReset(AsString: boolean?): number | string
-    if self._Interval == math.huge then
-        return if AsString then "N/A" else math.huge
-    end
+	if self._Interval == math.huge then
+		return if AsString then "N/A" else math.huge
+	end
 
-    local Time = os.clock() + self._UTCOffset
-    local Remaining = self._Interval - math.floor(Time % self._Interval)
-    return if AsString then string.format("%02d:%02d:%02d", Remaining / 3600, Remaining / 60 % 60, Remaining % 60) else Remaining
+	local Time = os.clock() + self._UTCOffset
+	local Remaining = self._Interval - math.floor(Time % self._Interval)
+	return if AsString
+		then string.format("%02d:%02d:%02d", Remaining / 3600, Remaining / 60 % 60, Remaining % 60)
+		else Remaining
 end
 
 --[=[
@@ -158,16 +162,16 @@ end
     @return Promise<boolean>
 ]=]
 function ScoreSync:IncrementAsync(Player: Player, Amount: number?)
-    if not Amount then
-        Amount = 1
-    end
+	if not Amount then
+		Amount = 1
+	end
 
-    return Promise.resolve(self._Processor:Add({
-        Time = os.clock(),
-        Event = "Increment",
-        Value = Amount,
-        Key = "User-" .. tostring(Player.UserId),
-    }))
+	return Promise.resolve(self._Processor:Add({
+		Time = os.clock(),
+		Event = "Increment",
+		Value = Amount,
+		Key = "User-" .. tostring(Player.UserId),
+	}))
 end
 
 --[=[
@@ -178,12 +182,12 @@ end
     @return Promise<boolean>
 ]=]
 function ScoreSync:SetAsync(Player: Player, Value: number)
-    return Promise.resolve(self._Processor:Add({
-        Time = os.clock(),
-        Event = "Set",
-        Value = Value,
-        Key = "User-" .. tostring(Player.UserId),
-    }))
+	return Promise.resolve(self._Processor:Add({
+		Time = os.clock(),
+		Event = "Set",
+		Value = Value,
+		Key = "User-" .. tostring(Player.UserId),
+	}))
 end
 
 --[=[
@@ -201,35 +205,36 @@ end
     @param Max number?
     @return Promise<{ Result }>
 ]=]
-function ScoreSync:GetOrderedListAsync(Count: number?, Min: number?, Max: number?): {{ key: string, value: number }}
-    local CanRefresh = os.clock() - self._Start >= self._Refresh
-    
-    if not CanRefresh and not Min and not Max then
-        return Promise.resolve(Array.filter(self._Cache, function(_, Index) 
-            return Index <= (Count or 100)
-        end))
-    end
+function ScoreSync:GetOrderedListAsync(Count: number?, Min: number?, Max: number?): { { key: string, value: number } }
+	local CanRefresh = os.clock() - self._Start >= self._Refresh
 
-    if CheckRequestBudget("Get") then
-        self._Start = os.clock()
-        local _Success, Pages = pcall(self._DataStore.GetSortedAsync, self._DataStore, not self._Order, Count or 100, Min, Max)
+	if not CanRefresh and not Min and not Max then
+		return Promise.resolve(Array.filter(self._Cache, function(_, Index)
+			return Index <= (Count or 100)
+		end))
+	end
 
-        local List = {}
+	if CheckRequestBudget("Get") then
+		self._Start = os.clock()
+		local _Success, Pages =
+			pcall(self._DataStore.GetSortedAsync, self._DataStore, not self._Order, Count or 100, Min, Max)
 
-        if _Success and Pages and typeof(Pages) ~= "string" then
-            local CurrentPage = Pages:GetCurrentPage()
-            List = table.clone(CurrentPage)
+		local List = {}
 
-            if not Min and not Max and not Array.equalsDeep(List, self._Cache) then -- only update cache when no value range is defined and the list is different
-                self._Cache = List
-                self.Updated:Fire(self._Cache)
-            end
-        end
+		if _Success and Pages and typeof(Pages) ~= "string" then
+			local CurrentPage = Pages:GetCurrentPage()
+			List = table.clone(CurrentPage)
 
-        return Promise.resolve(List)
-    end
+			if not Min and not Max and not Array.equalsDeep(List, self._Cache) then -- only update cache when no value range is defined and the list is different
+				self._Cache = List
+				self.Updated:Fire(self._Cache)
+			end
+		end
 
-    return Promise.reject("Request budget exceeded.")
+		return Promise.resolve(List)
+	end
+
+	return Promise.reject("Request budget exceeded.")
 end
 
 return ScoreSync

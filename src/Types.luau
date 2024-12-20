@@ -1,8 +1,8 @@
 export type Process = {
-    Key: string,
-    Time: number,
-    Value: number,
-    Event: "Increment" | "Set",
+	Key: string,
+	Time: number,
+	Value: number,
+	Event: "Increment" | "Set",
 }
 
 export type Config = {
@@ -10,11 +10,11 @@ export type Config = {
 	Name: string,
 	Type: ("Highest" | "Lowest")?,
 	Cycle: ("All-Time" | "Yearly" | "Quarterly" | "Monthly" | "Daily" | "Hourly")?,
-    Refresh: number?,
-    BatchOverrides: {
-        Size: number?,
-        Delay: number?,
-    }?
+	Refresh: number?,
+	BatchOverrides: {
+		Size: number?,
+		Delay: number?,
+	}?,
 }
 
 return {}
