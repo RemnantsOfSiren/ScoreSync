@@ -38,7 +38,7 @@ function Queue:Enqueue(Process: Types.Process)
 	return true
 end
 
-function Queue:Dequeue()
+function Queue:Dequeue(): Types.Process?
 	if #self.List == 0 then
 		return nil
 	end

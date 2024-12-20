@@ -38,11 +38,11 @@ ScoreSync.__index = ScoreSync
 
     Creates a new ScoreSync object.
     - `Name` (string): The name of the leaderboard.
-    - `UTC` (number, optional): The UTC offset for the leaderboard.
-    - `Type` (string, optional): The type of leaderboard (Highest or Lowest).
-    - `Cycle` (string, optional): The cycle of the leaderboard (All-Time, Yearly, Quarterly, Monthly, Weekly, Daily, Hourly).
-    - 'Refresh' (number, optional): The refresh rate of the leaderboard.
-    - `BatchOverrides` (table, optional): The batch overrides for the leaderboard.
+    - `UTC` (number, optional): The UTC offset for the leaderboard. Defaults to 0. (Note this is in hours)
+    - `Type` (string, optional): The type of leaderboard (Highest or Lowest). Defaults to 'Highest'.
+    - `Cycle` (string, optional): The cycle of the leaderboard, Options: ('All-Time', 'Yearly', 'Quarterly', 'Monthly', 'Weekly', 'Daily', 'Hourly'). Defaults to 'All-Time'.
+    - `Refresh` (number, optional): The refresh rate of the leaderboard. Defaults to 60.
+    - `BatchOverrides` (table, optional): The batch overrides for the Processor.
         - `Size` (number, optional): The number of requests to process at once. Defaults to 20
         - `Delay` (number, optional): The delay between each batch. Defaults to 30
 ]=]

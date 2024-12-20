@@ -4,9 +4,29 @@ local Types = require(script.Parent.Types)
 
 local CheckRequestBudget = require(script.Parent.CheckRequestBudget)
 
+--[=[
+    @class Processor
+    Processor object for managing the processing of events.
+]=]
 local Processor = {}
 Processor.__index = Processor
 
+--[=[
+    @function new
+    @within Processor
+    @param Callback (Event: Types.Process) -> boolean
+    @param Config { Size: number?, Delay: number? }?
+    @return Processor
+
+    Creates a new Processor object.
+    - `Callback` ((Event: Types.Process) -> boolean): The callback function to process the events.
+    - `Config` (table, optional): The configuration for the Processor.
+        - `Size` (number, optional): The number of requests to process at once. Defaults to 20
+        - `Delay` (number, optional): The delay between each batch. Defaults to 30
+    
+    The Processor object processes events in a queue, in a batch like manor, with a delay between each batch.
+    The Processor object will attempt to process all events in the queue, in the event of a server shutdown.
+]=]
 function Processor.new(Callback: (Event: Types.Process) -> boolean, Config: { Size: number?, Delay: number? }?)
 	local self = setmetatable({
 		_Queue = Queue.new(),
@@ -48,8 +68,19 @@ function Processor.new(Callback: (Event: Types.Process) -> boolean, Config: { Si
 	game:BindToClose(function()
 		if Thread then
 			task.cancel(Thread)
-			Thread = nil
+            Thread = nil
 		end
+
+        -- Process the remaining queue on server shutdown
+        while self._Queue:Size() > 0 do
+            local Process = self._Queue:Dequeue()
+
+            if Process and CheckRequestBudget(Process.Event) and not Callback(Process) then
+                self._Queue:Enqueue(Process)
+            end
+
+            task.wait()
+        end
 	end)
 
 	return self
