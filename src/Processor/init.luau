@@ -47,13 +47,12 @@ function Processor.new(Callback: (Event: Types.Process) -> boolean, Config: { Si
 					if not CheckRequestBudget("Get", BatchSize) then
 						break
 					end
+
 					if not CheckRequestBudget(Process.Event, BatchSize) then
 						break
 					end
 
-					if not Callback(Process) then
-						self._Queue:Enqueue(Process)
-					else
+					if Callback(Process) then
 						self._Queue:Remove(Process)
 					end
 				end

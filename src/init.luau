@@ -110,7 +110,7 @@ function ScoreSync.new(Config: Types.Config)
 		Updated = Signal.new(),
 		_Refresh = Refresh,
 		_Interval = Interval,
-		_DataStore = DataStore,
+		_DataStore = DataStore :: OrderedDataStore,
 		_Processor = Processor.new(Callback, Config.BatchOverrides),
 		_UTCOffset = UTCOffset,
 	}, ScoreSync)
