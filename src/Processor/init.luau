@@ -65,9 +65,8 @@ function Processor.new(Callback: (Event: Types.Process) -> boolean, Config: { Si
 	end)
 
 	game:BindToClose(function()
-		if Thread then
+		if Thread and coroutine.status(Thread) ~= "dead" then
 			task.cancel(Thread)
-            Thread = nil
 		end
 
         -- Process the remaining queue on server shutdown
