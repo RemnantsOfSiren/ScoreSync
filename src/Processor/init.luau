@@ -72,10 +72,10 @@ function Processor.new(Callback: (Event: Types.Process) -> boolean, Config: { Si
 
         -- Process the remaining queue on server shutdown
         while self._Queue:Size() > 0 do
-            local Process = self._Queue:Dequeue()
+            local Process = self._Queue:Peek()
 
-            if Process and CheckRequestBudget(Process.Event) and not Callback(Process) then
-                self._Queue:Enqueue(Process)
+            if Process and CheckRequestBudget(Process.Event) and Callback(Process) then
+                self._Queue:Remove(Process)
             end
 
             task.wait()
