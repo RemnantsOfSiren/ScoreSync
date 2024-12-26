@@ -51,6 +51,16 @@ ScoreSync.__index = ScoreSync
     @class ScoreSync
     Leaderboard object (ScoreSync) for managing player scores.
 ]=]
+local DayToNumberLookup = {
+	Sunday = 3,
+	Monday = 2,
+	Tuesday = 1,
+	Wednesday = 0,
+	Thursday = -1,
+	Friday = -2,
+	Saturday = -3,
+}
+
 function ScoreSync.new(Config: Types.Config)
 	local Name = if RunService:IsStudio() then "Mock" .. Config.Name else Config.Name
 	local Order = Config.Type or "Highest"
@@ -61,9 +71,10 @@ function ScoreSync.new(Config: Types.Config)
 	local Current = nil
 	local Interval = math.huge
 	local DataStore = nil
+	local DayOffset = DayToNumberLookup[Config.CycleDay or "Friday"] * 86400
 
 	if Cycle ~= "All-Time" then
-		local Time = os.clock() + UTCOffset
+		local Time = os.time() + DayOffset + UTCOffset
 
 		if Cycle == "Yearly" then
 			Interval = 31536000
@@ -113,11 +124,12 @@ function ScoreSync.new(Config: Types.Config)
 		_DataStore = DataStore :: OrderedDataStore,
 		_Processor = Processor.new(Callback, Config.BatchOverrides),
 		_UTCOffset = UTCOffset,
+		_DayOffset = DayOffset,
 	}, ScoreSync)
 
 	if Cycle ~= "All-Time" then
 		RunService.Heartbeat:Connect(function()
-			local Time = os.clock() + UTCOffset
+			local Time = os.time() + DayOffset + UTCOffset
 			local Key = math.floor(Time / Interval)
 
 			if Key ~= Current then
@@ -148,10 +160,16 @@ function ScoreSync:TimeUntilReset(AsString: boolean?): number | string
 		return if AsString then "N/A" else math.huge
 	end
 
-	local Time = os.clock() + self._UTCOffset
+	local Time = os.time() + self._DayOffset + self._UTCOffset
 	local Remaining = self._Interval - math.floor(Time % self._Interval)
 	return if AsString
-		then string.format("%02d:%02d:%02d", Remaining / 3600, Remaining / 60 % 60, Remaining % 60)
+		then string.format(
+			"%02d:%02d:%02d:%02d",
+			math.floor(Remaining / 86400),
+			math.floor(Remaining / 3600) % 24,
+			Remaining / 60 % 60,
+			Remaining % 60
+		)
 		else Remaining
 end
 
@@ -168,7 +186,7 @@ function ScoreSync:IncrementAsync(Player: Player, Amount: number?)
 	end
 
 	return Promise.resolve(self._Processor:Add({
-		Time = os.clock(),
+		Time = os.time(),
 		Event = "Increment",
 		Value = Amount,
 		Key = "User-" .. tostring(Player.UserId),
@@ -184,7 +202,7 @@ end
 ]=]
 function ScoreSync:SetAsync(Player: Player, Value: number)
 	return Promise.resolve(self._Processor:Add({
-		Time = os.clock(),
+		Time = os.time(),
 		Event = "Set",
 		Value = Value,
 		Key = "User-" .. tostring(Player.UserId),
@@ -207,7 +225,7 @@ end
     @return Promise<{ Result }>
 ]=]
 function ScoreSync:GetOrderedListAsync(Count: number?, Min: number?, Max: number?): { { key: string, value: number } }
-	local CanRefresh = os.clock() - self._Start >= self._Refresh
+	local CanRefresh = os.time() - self._Start >= self._Refresh
 
 	if not CanRefresh and not Min and not Max then
 		return Promise.resolve(Array.filter(self._Cache, function(_, Index)
@@ -216,7 +234,7 @@ function ScoreSync:GetOrderedListAsync(Count: number?, Min: number?, Max: number
 	end
 
 	if CheckRequestBudget("Get") then
-		self._Start = os.clock()
+		self._Start = os.time()
 		local _Success, Pages =
 			pcall(self._DataStore.GetSortedAsync, self._DataStore, not self._Order, Count or 100, Min, Max)
 

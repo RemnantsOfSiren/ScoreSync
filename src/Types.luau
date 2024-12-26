@@ -10,6 +10,7 @@ export type Config = {
 	Name: string,
 	Type: ("Highest" | "Lowest")?,
 	Cycle: ("All-Time" | "Yearly" | "Quarterly" | "Monthly" | "Daily" | "Hourly")?,
+	CycleDay: ("Sunday" | "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday" | "Saturday")?,
 	Refresh: number?,
 	BatchOverrides: {
 		Size: number?,
