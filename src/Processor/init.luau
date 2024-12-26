@@ -37,18 +37,14 @@ function Processor.new(Callback: (Event: Types.Process) -> boolean, Config: { Si
 			if self._Queue:Size() > 0 then
 				local BatchSize = Config and Config.Size or 20
 
-				for _ = BatchSize, 1, -1 do
+				for _ = math.min(BatchSize, self._Queue:Size()), 1, -1 do -- either use batch size or queue size, whichever is smaller
 					local Process = self._Queue:Peek()
 
-					if not Process then
-						break
-					end
-
-					if not CheckRequestBudget("Get", BatchSize) then
-						break
-					end
-
-					if not CheckRequestBudget(Process.Event, BatchSize) then
+					if
+						not Process
+						or not CheckRequestBudget("Get", BatchSize)
+						or not CheckRequestBudget(Process.Event, BatchSize)
+					then
 						break
 					end
 
@@ -69,16 +65,16 @@ function Processor.new(Callback: (Event: Types.Process) -> boolean, Config: { Si
 			task.cancel(Thread)
 		end
 
-        -- Process the remaining queue on server shutdown
-        while self._Queue:Size() > 0 do
-            local Process = self._Queue:Peek()
+		-- Process the remaining queue on server shutdown
+		while self._Queue:Size() > 0 do
+			local Process = self._Queue:Peek()
 
-            if Process and CheckRequestBudget(Process.Event) and Callback(Process) then
-                self._Queue:Remove(Process)
-            end
+			if Process and CheckRequestBudget(Process.Event) and Callback(Process) then
+				self._Queue:Remove(Process)
+			end
 
-            task.wait()
-        end
+			task.wait()
+		end
 	end)
 
 	return self
