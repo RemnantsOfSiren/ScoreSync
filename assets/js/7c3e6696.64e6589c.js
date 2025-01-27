@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkdocs=self.webpackChunkdocs||[]).push([[66],{7636:e=>{e.exports=JSON.parse('[{"type":"link","href":"/api/ScoreSync","label":"\u200bScore\u200bSync"}]')}}]);
