@@ -33,7 +33,7 @@ ScoreSync.__index = ScoreSync
 --[=[
     @function new
     @within ScoreSync
-    @param Config { Name: string, UTC: number?, Type: ("Highest" | "Lowest")?, Cycle: ("All-Time" | "Yearly" | "Quarterly" | "Monthly" | "Daily" | "Hourly")?, Refresh: number?, BatchOverrides: { Size: number?, Delay: number? }? }
+    @param Config { Name: string, UTC: number?, Type: ("Highest" | "Lowest")?, Cycle: ("All-Time" | "Yearly" | "Quarterly" | "Monthly" | "Daily" | "Hourly")?, CycleDay: ("Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday")?, Refresh: number?, BatchOverrides: { Size: number?, Delay: number? }? }
     @return ScoreSync
 
     Creates a new ScoreSync object.
@@ -41,6 +41,7 @@ ScoreSync.__index = ScoreSync
     - `UTC` (number, optional): The UTC offset for the leaderboard. Defaults to 0. (Note this is in hours)
     - `Type` (string, optional): The type of leaderboard (Highest or Lowest). Defaults to 'Highest'.
     - `Cycle` (string, optional): The cycle of the leaderboard, Options: ('All-Time', 'Yearly', 'Quarterly', 'Monthly', 'Weekly', 'Daily', 'Hourly'). Defaults to 'All-Time'.
+	- `CycleDay` (string, optional): The day of the week to reset the leaderboard. Defaults to 'Friday'.
     - `Refresh` (number, optional): The refresh rate of the leaderboard. Defaults to 60.
     - `BatchOverrides` (table, optional): The batch overrides for the Processor.
         - `Size` (number, optional): The number of requests to process at once. Defaults to 20
