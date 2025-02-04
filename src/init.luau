@@ -116,7 +116,7 @@ function ScoreSync.new(Config: Types.Config)
 	DataStore = DataStoreService:GetOrderedDataStore(if Cycle == "All-Time" then Name else `{Name}-{Cycle}:{Current}`)
 
 	local self = setmetatable({
-		_Cache = {},
+		_Cache = {} :: {},
 		_Start = os.clock() - Refresh,
 		_Order = Order,
 		Updated = Signal.new(),
@@ -186,6 +186,21 @@ function ScoreSync:IncrementAsync(Player: Player, Amount: number?)
 		Amount = 1
 	end
 
+	local Index = Sift.Array.findWhere(self._Cache, function(Item)
+		return Item.key == "User-" .. tostring(Player.UserId)
+	end)
+
+	if Index then
+		self._Cache[Index].value += Amount
+	else
+		table.insert(self._Cache, {
+			key = "User-" .. tostring(Player.UserId),
+			value = Amount,
+		})	
+	end
+	
+	self.Updated:Fire(self._Cache)
+
 	return Promise.resolve(self._Processor:Add({
 		Time = os.time(),
 		Event = "Increment",
@@ -202,6 +217,28 @@ end
     @return Promise<boolean>
 ]=]
 function ScoreSync:SetAsync(Player: Player, Value: number)
+	local Index = Sift.Array.findWhere(self._Cache, function(Item)
+		return Item.key == "User-" .. tostring(Player.UserId)
+	end)
+
+	if Index then
+		local value = self._Cache[Index].value
+		self._Cache[Index].value = if self._Order == "Highest"
+			then math.max(Value or 0, value)
+			else math.min(Value or 0, value)
+	else
+		table.insert(self._Cache, {
+			key = "User-" .. tostring(Player.UserId),
+			value = Value,
+		})	
+	end
+	
+	table.sort(self._Cache, function(A, B)
+		return if self._Order == "Highest" then A.value > B.value else A.value < B.value
+	end)
+
+	self.Updated:Fire(self._Cache)
+
 	return Promise.resolve(self._Processor:Add({
 		Time = os.time(),
 		Event = "Set",
