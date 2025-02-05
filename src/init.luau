@@ -120,6 +120,7 @@ function ScoreSync.new(Config: Types.Config)
 		_Start = os.clock() - Refresh,
 		_Order = Order,
 		Updated = Signal.new(),
+		Errored = Signal.new(),
 		_Refresh = Refresh,
 		_Interval = Interval,
 		_DataStore = DataStore :: OrderedDataStore,
@@ -291,6 +292,7 @@ function ScoreSync:GetOrderedListAsync(Count: number?, Min: number?, Max: number
 		return Promise.resolve(List)
 	end
 
+	self.Errored:Fire("Request budget exceeded.")
 	return Promise.reject("Request budget exceeded.")
 end
 
