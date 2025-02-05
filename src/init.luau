@@ -119,14 +119,17 @@ function ScoreSync.new(Config: Types.Config)
 		_Cache = {} :: {},
 		_Start = os.clock() - Refresh,
 		_Order = Order,
-		Updated = Signal.new(),
-		Errored = Signal.new(),
+		_Status = "Failed",
 		_Refresh = Refresh,
 		_Interval = Interval,
 		_DataStore = DataStore :: OrderedDataStore,
 		_Processor = Processor.new(Callback, Config.BatchOverrides),
 		_UTCOffset = UTCOffset,
 		_DayOffset = DayOffset,
+
+
+		Updated = Signal.new(),
+		StatusChanged = Signal.new(),
 	}, ScoreSync)
 
 	if Cycle ~= "All-Time" then
@@ -289,10 +292,17 @@ function ScoreSync:GetOrderedListAsync(Count: number?, Min: number?, Max: number
 			end
 		end
 
+		if self._Status ~= "Success" then
+			self._Status = "Success"
+			self.StatusChanged:Fire(self._Status)
+		end
 		return Promise.resolve(List)
 	end
 
-	self.Errored:Fire("Request budget exceeded.")
+	if self._Status ~= "Failed" then
+		self._Status = "Failed"
+		self.StatusChanged:Fire(self._Status, "Request budget exceeded.")
+	end
 	return Promise.reject("Request budget exceeded.")
 end
 
