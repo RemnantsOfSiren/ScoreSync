@@ -191,14 +191,14 @@ function ScoreSync:IncrementAsync(Player: Player, Amount: number?)
 	end
 
 	local Index = Sift.Array.findWhere(self._Cache, function(Item)
-		return Item.key == "User-" .. tostring(Player.UserId)
+		return Item.key == tostring(Player.UserId)
 	end)
 
 	if Index then
 		self._Cache[Index].value += Amount
 	else
 		table.insert(self._Cache, {
-			key = "User-" .. tostring(Player.UserId),
+			key = tostring(Player.UserId),
 			value = Amount,
 		})	
 	end
