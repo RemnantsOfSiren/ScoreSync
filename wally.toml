@@ -1,6 +1,6 @@
 [package]
 name = "remnantsofsiren/scoresync"
-version = "0.1.8"
+version = "0.1.9"
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "server"
 exclude = ["test", "Packages", "build", "test.project.json", "selene.toml", "README.md", ".gitignore", ".vscode"]

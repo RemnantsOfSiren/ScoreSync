@@ -33,7 +33,7 @@ ScoreSync.__index = ScoreSync
 --[=[
 	@function new
 	@within ScoreSync
-	@param Config { Name: string, UTC: number?, Type: ("Highest" | "Lowest")?, Cycle: ("All-Time" | "Yearly" | "Quarterly" | "Monthly" | "Daily" | "Hourly")?, CycleDay: ("Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday")?, Refresh: number?, BatchOverrides: { Size: number?, Delay: number? }? }
+	@param Config { Name: string, UTC: number?, Type: ("Highest" | "Lowest")?, Cycle: ("All-Time" | "Yearly" | "Quarterly" | "Monthly" | "Daily" | "Hourly")?, CycleDay: ("Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday")?, Refresh: number?, Version: number?, BatchOverrides: { Size: number?, Delay: number? }? }
 	@return ScoreSync
 
 	Creates a new ScoreSync object.
@@ -43,6 +43,7 @@ ScoreSync.__index = ScoreSync
 	- `Cycle` (string, optional): The cycle of the leaderboard, Options: ('All-Time', 'Yearly', 'Quarterly', 'Monthly', 'Weekly', 'Daily', 'Hourly'). Defaults to 'All-Time'.
 	- `CycleDay` (string, optional): The day of the week to reset the leaderboard. Defaults to 'Friday'.
 	- `Refresh` (number, optional): The refresh rate of the leaderboard. Defaults to 60.
+	- `Version` (number, optional): The version of the leaderboard. Defaults to 1.
 	- `BatchOverrides` (table, optional): The batch overrides for the Processor.
 		- `Size` (number, optional): The number of requests to process at once. Defaults to 20
 		- `Delay` (number, optional): The delay between each batch. Defaults to 30
@@ -66,6 +67,7 @@ function ScoreSync.new(Config: Types.Config)
 	local Name = if RunService:IsStudio() then "Mock" .. Config.Name else Config.Name
 	local Order = Config.Type or "Highest"
 	local Refresh = Config.Refresh or 60
+	local Version = Config.Version or 1
 	local UTCOffset = if Config.UTC then Config.UTC * 3600 else 0
 
 	local Cycle = Config.Cycle or "All-Time"
@@ -113,7 +115,7 @@ function ScoreSync.new(Config: Types.Config)
 		return Success
 	end
 
-	DataStore = DataStoreService:GetOrderedDataStore(if Cycle == "All-Time" then Name else `{Name}-{Cycle}:{Current}`)
+	DataStore = DataStoreService:GetOrderedDataStore("[Score-Sync]", `{Name}-{Version}:{if Cycle == "All-Time" then "All-Time" else Cycle ..":" .. Current}`)
 
 	local self = setmetatable({
 		_Cache = {} :: {},

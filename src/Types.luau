@@ -12,6 +12,7 @@ export type Config = {
 	Cycle: ("All-Time" | "Yearly" | "Quarterly" | "Monthly" | "Daily" | "Hourly")?,
 	CycleDay: ("Sunday" | "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday" | "Saturday")?,
 	Refresh: number?,
+	Version: number?,
 	BatchOverrides: {
 		Size: number?,
 		Delay: number?,
