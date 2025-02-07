@@ -129,7 +129,6 @@ function ScoreSync.new(Config: Types.Config)
 		_UTCOffset = UTCOffset,
 		_DayOffset = DayOffset,
 
-
 		Updated = Signal.new(),
 		StatusChanged = Signal.new(),
 	}, ScoreSync)
@@ -211,7 +210,7 @@ function ScoreSync:IncrementAsync(Player: Player, Amount: number?)
 		Time = os.time(),
 		Event = "Increment",
 		Value = Amount,
-		Key = "User-" .. tostring(Player.UserId),
+		Key = tostring(Player.UserId),
 	}))
 end
 
@@ -224,7 +223,7 @@ end
 ]=]
 function ScoreSync:SetAsync(Player: Player, Value: number)
 	local Index = Sift.Array.findWhere(self._Cache, function(Item)
-		return Item.key == "User-" .. tostring(Player.UserId)
+		return Item.key == tostring(Player.UserId)
 	end)
 
 	if Index then
@@ -234,7 +233,7 @@ function ScoreSync:SetAsync(Player: Player, Value: number)
 			else math.min(Value or 0, value)
 	else
 		table.insert(self._Cache, {
-			key = "User-" .. tostring(Player.UserId),
+			key = tostring(Player.UserId),
 			value = Value,
 		})	
 	end
@@ -249,7 +248,7 @@ function ScoreSync:SetAsync(Player: Player, Value: number)
 		Time = os.time(),
 		Event = "Set",
 		Value = Value,
-		Key = "User-" .. tostring(Player.UserId),
+		Key = tostring(Player.UserId),
 	}))
 end
 
