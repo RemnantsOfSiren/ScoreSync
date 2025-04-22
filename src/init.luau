@@ -97,25 +97,21 @@ function ScoreSync.new(Config: Types.Config)
 	end
 
 	local function Callback(Event: Types.Process): boolean
-		local Success, Error = pcall(DataStore.UpdateAsync, DataStore, Event.Key, function(Value: number | nil)
-			if Event.Event == "Increment" then
-				return (Value or 0) + Event.Value
-			elseif Event.Event == "Set" then
-				return if Order == "Highest"
+		local Success = pcall(DataStore.UpdateAsync, DataStore, Event.Key, function(Value: number | nil)
+			return if Event.Event == "Increment"
+				then (Value or 0) + Event.Value
+				else if Order == "Highest"
 					then math.max(Value or 0, Event.Value)
 					else math.min(Value or 0, Event.Value)
-			end
-			return 0
 		end)
-
-		if not Success then
-			warn(Error)
-		end
 
 		return Success
 	end
 
-	DataStore = DataStoreService:GetOrderedDataStore("[Score-Sync]", `{Name}-{Version}:{if Cycle == "All-Time" then "All-Time" else Cycle ..":" .. Current}`)
+	DataStore = DataStoreService:GetOrderedDataStore(
+		"[Score-Sync]",
+		`{Name}-{Version}:{if Cycle == "All-Time" then "All-Time" else Cycle .. ":" .. Current}`
+	)
 
 	local self = setmetatable({
 		_Cache = {} :: {},
@@ -147,7 +143,7 @@ function ScoreSync.new(Config: Types.Config)
 			end
 
 			if os.clock() - self._Start >= Refresh then
-				self:GetOrderedListAsync() -- if it hasn't refreshed in a while, automatically refresh
+				self:GetOrderedListAsync():catch(warn) -- if it hasn't refreshed in a while, automatically refresh
 			end
 		end)
 	end
@@ -201,9 +197,9 @@ function ScoreSync:IncrementAsync(Player: Player, Amount: number?)
 		table.insert(self._Cache, {
 			key = tostring(Player.UserId),
 			value = Amount,
-		})	
+		})
 	end
-	
+
 	self.Updated:Fire(self._Cache)
 
 	return Promise.resolve(self._Processor:Add({
@@ -235,9 +231,9 @@ function ScoreSync:SetAsync(Player: Player, Value: number)
 		table.insert(self._Cache, {
 			key = tostring(Player.UserId),
 			value = Value,
-		})	
+		})
 	end
-	
+
 	table.sort(self._Cache, function(A, B)
 		return if self._Order == "Highest" then A.value > B.value else A.value < B.value
 	end)
@@ -267,7 +263,13 @@ end
     @param Max number?
     @return Promise<{ Result }>
 ]=]
-function ScoreSync:GetOrderedListAsync(Count: number?, Min: number?, Max: number?): { { key: string, value: number } }
+type Promise<T> = typeof(Promise.new())
+
+function ScoreSync:GetOrderedListAsync(
+	Count: number?,
+	Min: number?,
+	Max: number?
+): Promise<{ { key: string, value: number } } | string>
 	local CanRefresh = os.time() - self._Start >= self._Refresh
 
 	if not CanRefresh and not Min and not Max then
