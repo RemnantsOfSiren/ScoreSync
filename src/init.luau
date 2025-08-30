@@ -99,11 +99,15 @@ function ScoreSync.new(Config: Types.Config)
 	local function Callback(Event: Types.Process): boolean
 		local Success = pcall(DataStore.UpdateAsync, DataStore, Event.Key, function(Value: number | nil)
 			return if Event.Event == "Increment"
-				then (Value or 0) + Event.Value
+				then math.floor((Value or 0) + Event.Value)
 				else if Order == "Highest"
-					then math.max(Value or 0, Event.Value)
-					else math.min(Value or 0, Event.Value)
+					then if not Value then math.floor(Event.Value) else math.max(math.floor(Value), math.floor(Event.Value))
+					else if not Value then math.floor(Event.Value) else math.min(math.floor(Value), math.floor(Event.Value))
 		end)
+
+		if not Success then
+			warn(`Failed to update {Event.Key} with {Event.Value}`)
+		end
 
 		return Success
 	end
@@ -130,7 +134,7 @@ function ScoreSync.new(Config: Types.Config)
 	}, ScoreSync)
 
 	if Cycle ~= "All-Time" then
-		RunService.Heartbeat:Connect(function()
+		self._Connection = RunService.Heartbeat:Connect(function()
 			local Time = os.time() + DayOffset + UTCOffset
 			local Key = math.floor(Time / Interval)
 
@@ -225,8 +229,8 @@ function ScoreSync:SetAsync(Player: Player, Value: number)
 	if Index then
 		local value = self._Cache[Index].value
 		self._Cache[Index].value = if self._Order == "Highest"
-			then math.max(Value or 0, value)
-			else math.min(Value or 0, value)
+			then math.max(Value, value)
+			else math.min(Value, value)
 	else
 		table.insert(self._Cache, {
 			key = tostring(Player.UserId),
@@ -281,7 +285,7 @@ function ScoreSync:GetOrderedListAsync(
 	if CheckRequestBudget("Get") then
 		self._Start = os.time()
 		local _Success, Pages =
-			pcall(self._DataStore.GetSortedAsync, self._DataStore, not self._Order, Count or 100, Min, Max)
+		pcall(self._DataStore.GetSortedAsync, self._DataStore, self._Order ~= "Highest", Count or 100, Min, Max)
 
 		local List = {}
 
@@ -307,6 +311,15 @@ function ScoreSync:GetOrderedListAsync(
 		self.StatusChanged:Fire(self._Status, "Request budget exceeded.")
 	end
 	return Promise.reject("Request budget exceeded.")
+end
+
+function ScoreSync:Destroy()
+	if self._Connection then
+		self._Connection:Disconnect()
+		self._Connection = nil
+	end
+
+	table.clear(self)
 end
 
 return ScoreSync

@@ -1,6 +1,6 @@
 [package]
 name = "remnantsofsiren/scoresync"
-version = "0.2.1"
+version = "0.2.9"
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "server"
 exclude = ["test", "Packages", "build", "test.project.json", "selene.toml", "README.md", ".gitignore", ".vscode"]
@@ -14,6 +14,6 @@ description = """
 shared-packages = "game.ReplicatedStorage.Packages"
 
 [dependencies]
-Sift = "csqrl/sift@0.0.9"
-Signal = "data-oriented-house/lemonsignal@1.10.0"
-Promise = "evaera/promise@4.0.0"
+Sift = "csqrl/sift@^0"
+Signal = "data-oriented-house/lemonsignal@^1"
+Promise = "evaera/promise@^4"
