@@ -2,7 +2,13 @@
 local RunService = game:GetService("RunService")
 local DataStoreService = game:GetService("DataStoreService")
 
+local CheckRequestBudget = require(script.CheckRequestBudget)
+
 local TestSuccess = pcall(function()
+	repeat
+		task.wait(.1)
+	until CheckRequestBudget("Set", 1)
+	
 	local TestStore = DataStoreService:GetDataStore("-")
 	TestStore:SetAsync("1", "Hello")
 end)
@@ -14,11 +20,10 @@ end
 
 local Types = require(script.Types)
 local Processor = require(script.Processor)
-local CheckRequestBudget = require(script.CheckRequestBudget)
 
-local Sift = require(script.Parent.Sift)
-local Signal = require(script.Parent.Signal)
-local Promise = require(script.Parent.Promise)
+local Sift = require(script.Parent.Sift) :: { [string]: any }
+local Signal = require(script.Parent.Signal) :: { [string]: any }
+local Promise = require(script.Parent.Promise) :: { [string]: any }
 
 local Array = Sift.Array
 
@@ -284,8 +289,7 @@ function ScoreSync:GetOrderedListAsync(
 
 	if CheckRequestBudget("Get") then
 		self._Start = os.time()
-		local _Success, Pages =
-		pcall(self._DataStore.GetSortedAsync, self._DataStore, self._Order ~= "Highest", Count or 100, Min, Max)
+		local _Success, Pages = pcall(self._DataStore.GetSortedAsync, self._DataStore, self._Order ~= "Highest", Count or 100, Min, Max)
 
 		local List = {}
 
