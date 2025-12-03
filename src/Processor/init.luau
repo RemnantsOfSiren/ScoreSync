@@ -35,7 +35,7 @@ function Processor.new(Callback: (Event: Types.Process) -> boolean, Config: { Si
 	local Thread = task.spawn(function()
 		while true do
 			if self._Queue:Size() > 0 then
-				local BatchSize = Config and Config.Size or 20
+				local BatchSize = Config and Config.Size or 100
 
 				for _ = math.min(BatchSize, self._Queue:Size()), 1, -1 do -- either use batch size or queue size, whichever is smaller
 					local Process = self._Queue:Peek()

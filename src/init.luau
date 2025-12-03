@@ -25,6 +25,7 @@ local Sift = require(script.Parent.Sift) :: { [string]: any }
 local Signal = require(script.Parent.Signal) :: { [string]: any }
 local Promise = require(script.Parent.Promise) :: { [string]: any }
 
+local function NOOP() end
 local Array = Sift.Array
 
 local ScoreSync = {}
@@ -49,6 +50,7 @@ ScoreSync.__index = ScoreSync
 	- `CycleDay` (string, optional): The day of the week to reset the leaderboard. Defaults to 'Friday'.
 	- `Refresh` (number, optional): The refresh rate of the leaderboard. Defaults to 60.
 	- `Version` (number, optional): The version of the leaderboard. Defaults to 1.
+	- `Predicate` (function, optional): The predicate function to filter the players, if true the player will be included in the leaderboard. Defaults to nil.
 	- `BatchOverrides` (table, optional): The batch overrides for the Processor.
 		- `Size` (number, optional): The number of requests to process at once. Defaults to 20
 		- `Delay` (number, optional): The delay between each batch. Defaults to 30
@@ -58,6 +60,7 @@ ScoreSync.__index = ScoreSync
     @class ScoreSync
     Leaderboard object (ScoreSync) for managing player scores.
 ]=]
+
 local DayToNumberLookup = {
 	Sunday = 3,
 	Monday = 2,
@@ -82,7 +85,7 @@ function ScoreSync.new(Config: Types.Config)
 	local DayOffset = DayToNumberLookup[Config.CycleDay or "Friday"] * 86400
 
 	if Cycle ~= "All-Time" then
-		local Time = os.time() + DayOffset + UTCOffset
+		local Time = DateTime.now().UnixTimestamp + DayOffset + UTCOffset
 
 		if Cycle == "Yearly" then
 			Interval = 31536000
@@ -101,61 +104,66 @@ function ScoreSync.new(Config: Types.Config)
 		Current = math.floor(Time / Interval)
 	end
 
-	local function Callback(Event: Types.Process): boolean
-		local Success = pcall(DataStore.UpdateAsync, DataStore, Event.Key, function(Value: number | nil)
-			return if Event.Event == "Increment"
-				then math.floor((Value or 0) + Event.Value)
+	local function Callback(QueuedEvent: Types.Process): boolean
+		if not DataStore then
+			return false
+		end
+
+		local Success, Data = pcall(DataStore.UpdateAsync, DataStore, QueuedEvent.Key, function(Value: number | nil)
+			return if QueuedEvent.Event == "Increment" then math.floor((Value or 0) + QueuedEvent.Value)
 				else if Order == "Highest"
-					then if not Value then math.floor(Event.Value) else math.max(math.floor(Value), math.floor(Event.Value))
-					else if not Value then math.floor(Event.Value) else math.min(math.floor(Value), math.floor(Event.Value))
+				then if not Value then math.floor(QueuedEvent.Value) else math.max(math.floor(Value), math.floor(QueuedEvent.Value))
+				else if not Value then math.floor(QueuedEvent.Value) else math.min(math.floor(Value), math.floor(QueuedEvent.Value))
 		end)
 
 		if not Success then
-			warn(`Failed to update {Event.Key} with {Event.Value}`)
+			warn(`Failed to update {QueuedEvent.Key} with {QueuedEvent.Value}`)
 		end
 
 		return Success
 	end
 
 	DataStore = DataStoreService:GetOrderedDataStore(
-		"[Score-Sync]",
-		`{Name}-{Version}:{if Cycle == "All-Time" then "All-Time" else Cycle .. ":" .. Current}`
+		`[Score-Sync]{Name}-{Version}`,
+		`{if Cycle == "All-Time" then "All-Time" else Cycle .. ":" .. Current}`
 	)
 
 	local self = setmetatable({
 		_Cache = {} :: {},
-		_Start = os.clock() - Refresh,
+		_Start = tick() - Refresh,
 		_Order = Order,
 		_Status = "Failed",
+		Updated = Signal.new(),
 		_Refresh = Refresh,
 		_Interval = Interval,
 		_DataStore = DataStore :: OrderedDataStore,
 		_Processor = Processor.new(Callback, Config.BatchOverrides),
 		_UTCOffset = UTCOffset,
 		_DayOffset = DayOffset,
-
-		Updated = Signal.new(),
+		_Predicate = Config.Predicate,
 		StatusChanged = Signal.new(),
 	}, ScoreSync)
 
-	if Cycle ~= "All-Time" then
-		self._Connection = RunService.Heartbeat:Connect(function()
-			local Time = os.time() + DayOffset + UTCOffset
-			local Key = math.floor(Time / Interval)
-
-			if Key ~= Current then
-				Current = Key
-				DataStore = DataStoreService:GetOrderedDataStore(`{Name}-{Cycle}:{Current}`)
-
-				self._Cache = {}
-				self._DataStore = DataStore
+	self._Thread = task.spawn(function()
+		while task.wait(1) do
+			if Cycle ~= "All-Time" then
+				local Time = DateTime.now().UnixTimestamp + DayOffset + UTCOffset
+				local Key = math.floor(Time / Interval)
+	
+				if Key ~= Current then
+					Current = Key
+					DataStore = DataStoreService:GetOrderedDataStore(`{Name}-{Cycle}:{Current}`)
+					self._Cache = {}
+					self._DataStore = DataStore
+				end
 			end
 
-			if os.clock() - self._Start >= Refresh then
-				self:GetOrderedListAsync():catch(warn) -- if it hasn't refreshed in a while, automatically refresh
+			local CurrentTime = tick()
+			if CurrentTime - self._Start >= Refresh then
+				local _ = self:GetOrderedListAsync():catch(NOOP)
 			end
-		end)
-	end
+		end
+	end)
 
 	return self
 end
@@ -173,6 +181,7 @@ function ScoreSync:TimeUntilReset(AsString: boolean?): number | string
 
 	local Time = os.time() + self._DayOffset + self._UTCOffset
 	local Remaining = self._Interval - math.floor(Time % self._Interval)
+	
 	return if AsString
 		then string.format(
 			"%02d:%02d:%02d:%02d",
@@ -192,6 +201,10 @@ end
     @return Promise<boolean>
 ]=]
 function ScoreSync:IncrementAsync(Player: Player, Amount: number?)
+	if self._Predicate and not self._Predicate(Player) then
+		return Promise.resolve(false)
+	end
+
 	if not Amount then
 		Amount = 1
 	end
@@ -203,11 +216,17 @@ function ScoreSync:IncrementAsync(Player: Player, Amount: number?)
 	if Index then
 		self._Cache[Index].value += Amount
 	else
-		table.insert(self._Cache, {
-			key = tostring(Player.UserId),
-			value = Amount,
-		})
+		if #self._Cache < 100 then
+			table.insert(self._Cache, {
+				key = tostring(Player.UserId),
+				value = Amount,
+			})
+		end
 	end
+
+	table.sort(self._Cache, function(A, B)
+		return if self._Order == "Highest" then A.value > B.value else A.value < B.value
+	end)
 
 	self.Updated:Fire(self._Cache)
 
@@ -227,6 +246,10 @@ end
     @return Promise<boolean>
 ]=]
 function ScoreSync:SetAsync(Player: Player, Value: number)
+	if self._Predicate and not self._Predicate(Player) then
+		return Promise.resolve(false)
+	end
+
 	local Index = Sift.Array.findWhere(self._Cache, function(Item)
 		return Item.key == tostring(Player.UserId)
 	end)
@@ -237,10 +260,12 @@ function ScoreSync:SetAsync(Player: Player, Value: number)
 			then math.max(Value, value)
 			else math.min(Value, value)
 	else
-		table.insert(self._Cache, {
-			key = tostring(Player.UserId),
-			value = Value,
-		})
+		if #self._Cache < 100 then
+			table.insert(self._Cache, {
+				key = tostring(Player.UserId),
+				value = Value,
+			})
+		end
 	end
 
 	table.sort(self._Cache, function(A, B)
@@ -270,57 +295,65 @@ end
     @param Count number?
     @param Min number?
     @param Max number?
-    @return Promise<{ Result }>
+    @return Promise<{ Result? }>
 ]=]
 type Promise<T> = typeof(Promise.new())
+
+type Result = { key: string, value: number }
 
 function ScoreSync:GetOrderedListAsync(
 	Count: number?,
 	Min: number?,
 	Max: number?
-): Promise<{ { key: string, value: number } } | string>
-	local CanRefresh = os.time() - self._Start >= self._Refresh
+): Promise<{ Result? }>
+	local CanRefresh = tick() - self._Start >= self._Refresh
+
+	Count = Count or 100
 
 	if not CanRefresh and not Min and not Max then
 		return Promise.resolve(Array.filter(self._Cache, function(_, Index)
-			return Index <= (Count or 100)
+			return Index <= Count
 		end))
 	end
 
-	if CheckRequestBudget("Get") then
-		self._Start = os.time()
-		local _Success, Pages = pcall(self._DataStore.GetSortedAsync, self._DataStore, self._Order ~= "Highest", Count or 100, Min, Max)
+	local List = {} :: { Result? }
 
-		local List = {}
-
+	if CheckRequestBudget("Get", 1) then
+		self._Start = tick()
+		local _Success, Pages = pcall(self._DataStore.GetSortedAsync, self._DataStore, self._Order ~= "Highest", Count, Min, Max)
+		
 		if _Success and Pages and typeof(Pages) ~= "string" then
 			local CurrentPage = Pages:GetCurrentPage()
 			List = table.clone(CurrentPage)
 
 			if not Min and not Max and not Array.equalsDeep(List, self._Cache) then -- only update cache when no value range is defined and the list is different
-				self._Cache = List
+				self._Cache = table.clone(List)
 				self.Updated:Fire(self._Cache)
 			end
 		end
 
-		if self._Status ~= "Success" then
+		if _Success and self._Status ~= "Success" then
 			self._Status = "Success"
 			self.StatusChanged:Fire(self._Status)
 		end
-		return Promise.resolve(List)
+	elseif self._Status ~= "Failed" then
+		if Min and Max and Min < #List and Max < #List then
+			table.move(self._Cache, Min, Max, 1, List)
+		else
+			List = table.clone(self._Cache)
+		end
+
+		self._Status = "Failed"
+		self.StatusChanged:Fire(self._Status)
 	end
 
-	if self._Status ~= "Failed" then
-		self._Status = "Failed"
-		self.StatusChanged:Fire(self._Status, "Request budget exceeded.")
-	end
-	return Promise.reject("Request budget exceeded.")
+	return Promise.resolve(List)
 end
 
 function ScoreSync:Destroy()
-	if self._Connection then
-		self._Connection:Disconnect()
-		self._Connection = nil
+	if self._Thread and coroutine.status(self._Thread) ~= "dead" then
+		task.cancel(self._Thread)
+		self._Thread = nil
 	end
 
 	table.clear(self)
