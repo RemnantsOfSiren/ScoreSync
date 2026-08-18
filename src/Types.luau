@@ -1,8 +1,11 @@
+--!strict
+--!optimize 2
 export type Entry = {
 	Id: number,
+	Rank: number,
 	Name: string,
-	Verified: boolean,
 	Value: number,
+	Verified: boolean,
 }
 
 export type Config = {

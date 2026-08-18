@@ -1,3 +1,5 @@
+--!strict
+--!optimize 2
 local DataStoreService = game:GetService("DataStoreService")
 
 return function(Event: "Get" | "Set"): boolean
