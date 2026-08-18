@@ -1,23 +1,25 @@
-export type Process = {
-	Key: string,
-	Time: number,
+export type Entry = {
+	Id: number,
+	Name: string,
+	Verified: boolean,
 	Value: number,
-	Event: "Increment" | "Set",
 }
 
 export type Config = {
 	UTC: number?,
 	Name: string,
 	Type: ("Highest" | "Lowest")?,
-	Cycle: ("All-Time" | "Yearly" | "Quarterly" | "Monthly" | "Daily" | "Hourly")?,
+	Mock: boolean?,
+	Cycle: ("All-Time" | "Yearly" | "Quarterly" | "Monthly" | "Weekly" | "Daily" | "Hourly")?,
 	Refresh: number?,
 	Version: number?,
 	CycleDay: ("Sunday" | "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday" | "Saturday")?,
-	Predicate: (Player: Player) -> boolean?,
+	Predicate: ((Player: Player) -> boolean)?,
 	BatchOverrides: {
 		Size: number?,
 		Delay: number?,
 	}?,
+	SavedRequestsPerPlayer: number?,
 }
 
 return {}

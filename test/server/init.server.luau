@@ -10,20 +10,24 @@ repeat
     task.wait(1)
 until Player
 
-for _, Cycle in {"Hourly", "Weekly"} do 
+for _, Cycle in {"Daily", "Weekly"} do 
     local Score = ScoreSync.new({
-        Name = "Score",
+        Name = "Test Score",
         Cycle = Cycle,
         CycleDay = "Tuesday",
         Refresh = 60,
     })
 
-    Score.Updated:Connect(print)
+    Score.Updated:Connect(function(List)
+        print(`[Test Score] - Cycle: {Cycle}, List:`, List)
+    end)
 
     task.spawn(function()
-        while task.wait(1) do
-            Score:IncrementAsync(Player, 1)
-            print(Score:TimeUntilReset(true))
+        while true do
+            for I = 1, 10 do
+                Score:_IncrementAsync(math.random(100000, 1000000), math.random(1, 40))
+            end
+            task.wait(1)
         end
     end)
 end

@@ -1,12 +1,12 @@
 [package]
 name = "remnantsofsiren/scoresync"
-version = "0.4.3"
+version = "1.0.1"
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "server"
-exclude = ["test", "Packages", "build", "test.project.json", "selene.toml", "README.md", ".gitignore", ".vscode"]
+exclude = ["test", "Packages", "build", "test.project.json", "selene.toml", "README.md", ".gitignore", ".vscode", "old"]
 description = """
     ScoreSync aims to fix some outstanding issues found when making Leaderboards
-
+    
     Api Page: https://remnantsofsiren.github.io/ScoreSync
 """
 
